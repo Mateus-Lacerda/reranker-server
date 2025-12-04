@@ -827,7 +827,7 @@ wheels = [
 ]
 
 [[package]]
-name = "re-client"
+name = "reserver-client"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

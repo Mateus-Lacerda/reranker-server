@@ -40,7 +40,7 @@ This project provides a complete solution for document reranking using ReServer 
 docker run -p 50051:50051 ghcr.io/Mateus-Lacerda/reranker-server:latest
 
 # Install the SDK
-pip install re-client
+pip install reserver-client
 
 # Use in your Python code
 from re_client import ReServerClient

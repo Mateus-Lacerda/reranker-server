@@ -95,7 +95,7 @@ If you're contributing to the project:
 docker run -p 50051:50051 ghcr.io/Mateus-Lacerda/reranker-server:latest
 
 # Install and use the SDK
-pip install re-client
+pip install reserver-client
 python -c "
 from re_client import ReServerClient
 client = ReServerClient()

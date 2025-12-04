@@ -1,5 +1,5 @@
 [project]
-name = "re-client"
+name = "reserver-client"
 version = "0.1.0"
 description = "Python SDK for Mateus-Lacerda Reranker Server"
 readme = "README.md"

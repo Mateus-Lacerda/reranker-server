@@ -5,7 +5,7 @@ A Python SDK for interacting with the Reranker Server via gRPC. This library pro
 ## Installation
 
 ```bash
-pip install re-client
+pip install reserver-client
 ```
 
 Or install from source:
