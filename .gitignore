@@ -14,3 +14,4 @@ wheels/
 
 **/model/onnx_full
 **/model/onnx_optimized
+.github/DEPLOYMENT.md
