@@ -12,5 +12,5 @@ wheels/
 
 .env
 
-model/onnx_full
-model/onnx_optimized
+**/model/onnx_full
+**/model/onnx_optimized

@@ -1,5 +1,5 @@
 def main():
-    print("Hello from colbert-server!")
+    print("Hello from sdk!")
 
 
 if __name__ == "__main__":
