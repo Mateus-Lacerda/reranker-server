@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 
 import numpy as np
@@ -64,6 +65,10 @@ async def serve():
 
     server_port = int(os.getenv("SERVER_PORT", "50051"))
     server = aio.server()
+    print(f"Starting server on port {server_port}", flush=True)
+    print(f"Model path: {model_path}", flush=True)
+    print(f"Tokenizer path: {tokenizer_path}", flush=True)
+    print(f"Pool size: {pool_size}", flush=True)
     add_RerankServiceServicer_to_server(OnnxRerankerService(pool), server)
     server.add_insecure_port(f"[::]:{server_port}")
     await server.start()

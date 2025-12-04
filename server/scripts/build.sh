@@ -1,5 +1,9 @@
 set -e
+cd ..
+
 ./scripts/compile_protos.sh
+
+cd server
 
 docker build -t reranker-server \
   --build-arg POOL_SIZE=1 \
