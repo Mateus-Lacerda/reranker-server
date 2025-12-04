@@ -20,10 +20,10 @@ pip install .
 ### Basic Usage
 
 ```python
-from re_client import ColBERTClient
+from re_client import ReServerClient
 
 # Create client
-client = ColBERTClient(host="localhost", port=50051)
+client = ReServerClient(host="localhost", port=50051)
 
 # Rerank documents
 response = client.rerank(
@@ -44,10 +44,10 @@ for i, result in enumerate(response.results):
 
 ```python
 import asyncio
-from re_client import ColBERTClient
+from re_client import ReServerClient
 
 async def main():
-    client = ColBERTClient()
+    client = ReServerClient()
     
     response = await client.rerank_async(
         query="machine learning frameworks",
@@ -71,17 +71,17 @@ asyncio.run(main())
 Set these environment variables to configure the client:
 
 ```bash
-export COLBERT_HOST=localhost
-export COLBERT_PORT=50051
-export COLBERT_TIMEOUT=30.0
-export COLBERT_MAX_RETRIES=3
-export COLBERT_SECURE=false
+export RESERVER_HOST=localhost
+export RESERVER_PORT=50051
+export RESERVER_TIMEOUT=30.0
+export RESERVER_MAX_RETRIES=3
+export RESERVER_SECURE=false
 ```
 
 ### Programmatic Configuration
 
 ```python
-from re_client import ColBERTClient, ClientConfig
+from re_client import ReServerClient, ClientConfig
 
 # Using config object
 config = ClientConfig(
@@ -91,7 +91,7 @@ config = ClientConfig(
     secure=True
 )
 
-client = ColBERTClient(
+client = ReServerClient(
     host=config.host,
     port=config.port,
     timeout=config.timeout,
@@ -99,7 +99,7 @@ client = ColBERTClient(
 )
 
 # Or directly
-client = ColBERTClient(
+client = ReServerClient(
     host="my-server.com",
     port=50051,
     timeout=60.0,
@@ -114,9 +114,9 @@ client = ColBERTClient(
 For large document sets, use batch processing:
 
 ```python
-from re_client import ColBERTClient, batch_rerank
+from re_client import ReServerClient, batch_rerank
 
-client = ColBERTClient()
+client = ReServerClient()
 
 # Process 1000 documents in batches of 100
 large_doc_list = ["document " + str(i) for i in range(1000)]
@@ -156,24 +156,24 @@ print(f"Min score: {stats['min_score']:.4f}")
 
 ```python
 from re_client import (
-    ColBERTClient,
-    ColBERTConnectionError,
-    ColBERTServerError,
-    ColBERTTimeoutError,
-    ColBERTValidationError
+    ReServerClient,
+    ReServerConnectionError,
+    ReServerServerError,
+    ReServerTimeoutError,
+    ReServerValidationError
 )
 
-client = ColBERTClient()
+client = ReServerClient()
 
 try:
     response = client.rerank("query", ["doc1", "doc2"])
-except ColBERTConnectionError:
+except ReServerConnectionError:
     print("Cannot connect to server")
-except ColBERTTimeoutError:
+except ReServerTimeoutError:
     print("Request timed out")
-except ColBERTValidationError as e:
+except ReServerValidationError as e:
     print(f"Invalid input: {e}")
-except ColBERTServerError as e:
+except ReServerServerError as e:
     print(f"Server error: {e}")
 ```
 
@@ -191,7 +191,7 @@ if await client.health_check_async():
 
 ## API Reference
 
-### ColBERTClient
+### ReServerClient
 
 Main client class for interacting with the server.
 

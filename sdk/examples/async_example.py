@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Asynchronous example of using ColBERT Client SDK.
+Asynchronous example of using ReServer Client SDK.
 """
 
 import asyncio

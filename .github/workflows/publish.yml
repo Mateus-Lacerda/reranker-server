@@ -86,7 +86,7 @@ jobs:
         with:
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/colbert-server
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/reranker-server
           tags: |
             type=ref,event=tag
             type=semver,pattern={{version}}
@@ -136,7 +136,7 @@ jobs:
             
             ### Docker Images
             - **GitHub Container Registry**: \`ghcr.io/${context.repo.owner}/${context.repo.repo}:${version}\`
-            - **Docker Hub**: \`${{ secrets.DOCKERHUB_USERNAME }}/colbert-server:${version}\`
+            - **Docker Hub**: \`${{ secrets.DOCKERHUB_USERNAME }}/reranker-server:${version}\`
             
             ### Usage
             \`\`\`bash

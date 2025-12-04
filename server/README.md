@@ -1,4 +1,4 @@
-# ColBERT Reranker Server
+# Reranker Server
 
 A high-performance gRPC server for document reranking using ColBERT v2.0 model with ONNX runtime.
 
@@ -99,7 +99,7 @@ chmod +x compile_protos.sh
 ### Project Structure
 
 ```
-colbert-server/
+reranker-server/
 ├── server/           # gRPC server implementation
 │   ├── server.py     # Main server
 │   ├── test_server.py # Test client

@@ -1,10 +1,10 @@
 """
-Exception classes for ColBERT Client SDK.
+Exception classes for ReServer Client SDK.
 """
 
 
 class ReServerClientError(Exception):
-    """Base exception for all ColBERT client errors."""
+    """Base exception for all ReServer client errors."""
     pass
 
 

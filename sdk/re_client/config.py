@@ -20,11 +20,11 @@ class ClientConfig:
     def from_env(cls) -> "ClientConfig":
         """Create configuration from environment variables."""
         return cls(
-            host=os.getenv("COLBERT_HOST", "localhost"),
-            port=int(os.getenv("COLBERT_PORT", "50051")),
-            timeout=float(os.getenv("COLBERT_TIMEOUT", "30.0")),
-            max_retries=int(os.getenv("COLBERT_MAX_RETRIES", "3")),
-            secure=os.getenv("COLBERT_SECURE", "false").lower() == "true",
+            host=os.getenv("RESERVER_HOST", "localhost"),
+            port=int(os.getenv("RESERVER_PORT", "50051")),
+            timeout=float(os.getenv("RESERVER_TIMEOUT", "30.0")),
+            max_retries=int(os.getenv("RESERVER_MAX_RETRIES", "3")),
+            secure=os.getenv("RESERVER_SECURE", "false").lower() == "true",
         )
 
     @property

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Basic example of using ColBERT Client SDK.
+Basic example of using ReServer Client SDK.
 """
 
 from re_client import ReServerClient
