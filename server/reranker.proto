@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package reranker;
+
+service RerankService {
+  rpc Rerank (RerankRequest) returns (RerankResponse) {}
+}
+
+message RerankRequest {
+  string query = 1;
+  repeated string documents = 2;
+}
+
+message RerankResult {
+  int32 original_index = 1;
+  float score = 2;
+  string text = 3;
+}
+
+message RerankResponse {
+  repeated RerankResult results = 1;
+}

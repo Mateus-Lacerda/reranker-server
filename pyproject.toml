@@ -1,0 +1,18 @@
+[project]
+name = "reranker-server"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "grpcio>=1.76.0",
+    "grpcio-tools>=1.76.0",
+    "numpy>=2.3.5",
+    "onnxruntime>=1.23.2",
+    "tokenizers>=0.21.4",
+]
+
+[tool.uv.workspace]
+members = [
+    "model",
+]
