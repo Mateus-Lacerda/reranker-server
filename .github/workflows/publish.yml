@@ -86,13 +86,13 @@ jobs:
         with:
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/reranker-server
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/colbert-server
           tags: |
             type=ref,event=tag
             type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
             type=raw,value=latest
+          flavor: |
+            latest=false
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
@@ -131,8 +131,8 @@ jobs:
             ## 📦 Published Artifacts
             
             ### Python SDK
-            - **PyPI Package**: \`re-client==${version}\`
-            - **Installation**: \`pip install re-client==${version}\`
+            - **PyPI Package**: \`reserver-client==${version}\`
+            - **Installation**: \`pip install reserver-client==${version}\`
             
             ### Docker Images
             - **GitHub Container Registry**: \`ghcr.io/${context.repo.owner}/${context.repo.repo}:${version}\`
@@ -144,7 +144,7 @@ jobs:
             docker run -p 50051:50051 ghcr.io/${context.repo.owner}/${context.repo.repo}:${version}
             
             # Install and use the SDK
-            pip install re-client==${version}
+            pip install reserver-client==${version}
             \`\`\`
             `;
             

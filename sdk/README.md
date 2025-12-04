@@ -1,6 +1,6 @@
-# Reranker Server Client SDK
+# ReServer Client SDK
 
-A Python SDK for interacting with the Reranker Server via gRPC.
+A Python SDK for interacting with the Reranker Server via gRPC. This library provides both synchronous and asynchronous interfaces for document reranking with comprehensive error handling and utility functions.
 
 ## Installation
 
@@ -12,7 +12,9 @@ Or install from source:
 
 ```bash
 cd sdk
-pip install .
+uv sync
+uv build
+pip install dist/*.whl
 ```
 
 ## Quick Start
@@ -27,17 +29,17 @@ client = ReServerClient(host="localhost", port=50051)
 
 # Rerank documents
 response = client.rerank(
-    query="how to install python dependencies fast",
+    query="machine learning frameworks",
     documents=[
-        "UV is an extremely fast Python package manager written in Rust.",
-        "Pip is the standard installer for Python packages.",
-        "The sky is blue and the day is beautiful.",
+        "TensorFlow is a machine learning library",
+        "React is a web development framework",
+        "PyTorch is used for deep learning"
     ]
 )
 
-# Print results
-for i, result in enumerate(response.results):
-    print(f"{i+1}. Score: {result.score:.4f} - {result.text}")
+# Process results
+for result in response.results:
+    print(f"Score: {result.score:.4f} - {result.text}")
 ```
 
 ### Async Usage
@@ -48,18 +50,18 @@ from re_client import ReServerClient
 
 async def main():
     client = ReServerClient()
-    
+
     response = await client.rerank_async(
-        query="machine learning frameworks",
+        query="python package managers",
         documents=[
-            "TensorFlow is an open source machine learning framework.",
-            "PyTorch is a machine learning library based on Torch.",
-            "Cooking recipes for Italian pasta.",
+            "pip is the standard Python package installer",
+            "uv is a fast Python package manager written in Rust",
+            "npm is a package manager for JavaScript"
         ]
     )
-    
+
     for result in response.top_k(2):
-        print(f"Score: {result.score:.4f} - {result.text}")
+        print(f"{result.text} (score: {result.score:.4f})")
 
 asyncio.run(main())
 ```
@@ -68,7 +70,7 @@ asyncio.run(main())
 
 ### Environment Variables
 
-Set these environment variables to configure the client:
+The SDK can be configured using environment variables:
 
 ```bash
 export RESERVER_HOST=localhost
@@ -83,11 +85,12 @@ export RESERVER_SECURE=false
 ```python
 from re_client import ReServerClient, ClientConfig
 
-# Using config object
+# Using ClientConfig
 config = ClientConfig(
-    host="my-server.com",
-    port=50051,
+    host="production-server.com",
+    port=443,
     timeout=60.0,
+    max_retries=5,
     secure=True
 )
 
@@ -95,78 +98,74 @@ client = ReServerClient(
     host=config.host,
     port=config.port,
     timeout=config.timeout,
+    max_retries=config.max_retries,
     secure=config.secure
 )
 
-# Or directly
-client = ReServerClient(
-    host="my-server.com",
-    port=50051,
-    timeout=60.0,
-    secure=True
-)
+# Or from environment
+config = ClientConfig.from_env()
+client = ReServerClient(**config.__dict__)
 ```
 
 ## Advanced Features
 
 ### Batch Processing
 
-For large document sets, use batch processing:
+For processing multiple queries or large document sets:
 
 ```python
-from re_client import ReServerClient, batch_rerank
+from re_client.utils import batch_rerank
 
-client = ReServerClient()
-
-# Process 1000 documents in batches of 100
-large_doc_list = ["document " + str(i) for i in range(1000)]
-
-response = batch_rerank(
+results = batch_rerank(
     client=client,
-    query="search query",
-    documents=large_doc_list,
-    batch_size=100
+    queries=["query1", "query2"],
+    documents_list=[["doc1", "doc2"], ["doc3", "doc4"]],
+    batch_size=10,
+    max_workers=4
 )
 ```
 
-### Filtering Results
+### Filtering and Utilities
 
 ```python
-from re_client import filter_by_score_threshold, get_top_k_with_threshold
+from re_client.utils import (
+    filter_by_score_threshold,
+    get_top_k_with_threshold,
+    calculate_score_statistics
+)
 
 # Filter by minimum score
-filtered = filter_by_score_threshold(response, threshold=0.5)
+filtered_results = filter_by_score_threshold(
+    response.results,
+    threshold=0.5
+)
 
-# Get top 5 results with minimum score
-top_results = get_top_k_with_threshold(response, k=5, threshold=0.3)
-```
+# Get top k results above threshold
+top_results = get_top_k_with_threshold(
+    response.results,
+    k=5,
+    threshold=0.3
+)
 
-### Score Statistics
-
-```python
-from re_client import calculate_score_statistics
-
-stats = calculate_score_statistics(response)
-print(f"Mean score: {stats['mean_score']:.4f}")
-print(f"Max score: {stats['max_score']:.4f}")
-print(f"Min score: {stats['min_score']:.4f}")
+# Calculate statistics
+stats = calculate_score_statistics(response.results)
+print(f"Mean: {stats['mean']:.4f}")
+print(f"Std: {stats['std']:.4f}")
 ```
 
 ### Error Handling
 
 ```python
 from re_client import (
-    ReServerClient,
-    ReServerConnectionError,
-    ReServerServerError,
-    ReServerTimeoutError,
-    ReServerValidationError
+    ReServerClientError,      # Base exception
+    ReServerConnectionError,  # Connection issues
+    ReServerTimeoutError,     # Request timeouts
+    ReServerServerError,      # Server-side errors
+    ReServerValidationError   # Input validation errors
 )
 
-client = ReServerClient()
-
 try:
-    response = client.rerank("query", ["doc1", "doc2"])
+    response = client.rerank(query, documents)
 except ReServerConnectionError:
     print("Cannot connect to server")
 except ReServerTimeoutError:
@@ -175,6 +174,8 @@ except ReServerValidationError as e:
     print(f"Invalid input: {e}")
 except ReServerServerError as e:
     print(f"Server error: {e}")
+except ReServerClientError as e:
+    print(f"Client error: {e}")
 ```
 
 ### Health Check
@@ -193,63 +194,284 @@ if await client.health_check_async():
 
 ### ReServerClient
 
-Main client class for interacting with the server.
+The main client class for interacting with the reranking server.
+
+#### Constructor
+
+```python
+ReServerClient(
+    host: str = "localhost",
+    port: int = 50051,
+    timeout: float = 30.0,
+    max_retries: int = 3,
+    secure: bool = False,
+    credentials: Optional[grpc.ChannelCredentials] = None
+)
+```
+
+**Parameters:**
+- `host`: Server hostname
+- `port`: Server port
+- `timeout`: Request timeout in seconds
+- `max_retries`: Maximum number of retry attempts
+- `secure`: Whether to use secure connection (TLS)
+- `credentials`: gRPC credentials for secure connections
 
 #### Methods
 
-- `rerank(query, documents, timeout=None)` - Synchronous reranking
-- `rerank_async(query, documents, timeout=None)` - Asynchronous reranking
-- `health_check(timeout=None)` - Check server health
-- `health_check_async(timeout=None)` - Async health check
+##### rerank()
 
-#### Parameters
+Synchronous document reranking.
 
-- `host` (str): Server hostname (default: "localhost")
-- `port` (int): Server port (default: 50051)
-- `timeout` (float): Request timeout in seconds (default: 30.0)
-- `max_retries` (int): Maximum retry attempts (default: 3)
-- `secure` (bool): Use secure connection (default: False)
-- `credentials` (grpc.ChannelCredentials): gRPC credentials for secure connections
+```python
+def rerank(
+    self,
+    query: str,
+    documents: List[str],
+    timeout: Optional[float] = None
+) -> RerankResponse
+```
 
-### RerankResponse
+**Parameters:**
+- `query`: Search query string
+- `documents`: List of documents to rerank
+- `timeout`: Optional request timeout override
 
-Response object containing reranking results.
+**Returns:** `RerankResponse` object with ranked results
 
-#### Properties
+**Raises:**
+- `ReServerValidationError`: Invalid input parameters
+- `ReServerConnectionError`: Cannot connect to server
+- `ReServerTimeoutError`: Request timeout
+- `ReServerServerError`: Server-side error
+- `ReServerClientError`: Unexpected client error
 
-- `results` (List[RerankResult]): List of ranked results
+##### rerank_async()
 
-#### Methods
+Asynchronous document reranking.
 
-- `top_k(k)` - Get top k results
-- `get_by_original_index(index)` - Get result by original document index
-- `__len__()` - Number of results
-- `__iter__()` - Iterate over results
+```python
+async def rerank_async(
+    self,
+    query: str,
+    documents: List[str],
+    timeout: Optional[float] = None
+) -> RerankResponse
+```
 
-### RerankResult
+Same parameters and return type as `rerank()`, but returns a coroutine.
+
+##### health_check()
+
+Check server health synchronously.
+
+```python
+def health_check(self, timeout: Optional[float] = None) -> bool
+```
+
+**Returns:** `True` if server is healthy, `False` otherwise
+
+##### health_check_async()
+
+Check server health asynchronously.
+
+```python
+async def health_check_async(self, timeout: Optional[float] = None) -> bool
+```
+
+### Data Models
+
+#### RerankResponse
+
+Container for reranking results.
+
+```python
+@dataclass
+class RerankResponse:
+    results: List[RerankResult]
+
+    def __len__(self) -> int
+    def __iter__(self)
+    def __getitem__(self, index: int) -> RerankResult
+    def top_k(self, k: int) -> List[RerankResult]
+    def get_by_original_index(self, original_index: int) -> Optional[RerankResult]
+```
+
+**Methods:**
+- `top_k(k)`: Get top k results
+- `get_by_original_index(index)`: Get result by original document index
+
+#### RerankResult
 
 Individual reranking result.
 
-#### Properties
+```python
+@dataclass
+class RerankResult:
+    original_index: int  # Original position in input documents
+    score: float         # Relevance score
+    text: str           # Document text
+```
 
-- `original_index` (int): Original document index
-- `score` (float): Relevance score
-- `text` (str): Document text
+#### RerankRequest
+
+Request model for validation.
+
+```python
+@dataclass
+class RerankRequest:
+    query: str
+    documents: List[str]
+```
+
+Automatically validates that query and documents are not empty.
+
+### Utility Functions
+
+#### batch_rerank()
+
+Process multiple queries in batches.
+
+```python
+from re_client.utils import batch_rerank
+
+results = batch_rerank(
+    client=client,
+    queries=["query1", "query2"],
+    documents_list=[["doc1", "doc2"], ["doc3", "doc4"]],
+    batch_size=10,
+    max_workers=4
+)
+```
+
+#### filter_by_score_threshold()
+
+Filter results by minimum score.
+
+```python
+from re_client.utils import filter_by_score_threshold
+
+filtered_results = filter_by_score_threshold(
+    response.results,
+    threshold=0.5
+)
+```
+
+#### get_top_k_with_threshold()
+
+Get top k results above threshold.
+
+```python
+from re_client.utils import get_top_k_with_threshold
+
+top_results = get_top_k_with_threshold(
+    response.results,
+    k=5,
+    threshold=0.3
+)
+```
+
+#### calculate_score_statistics()
+
+Calculate score statistics.
+
+```python
+from re_client.utils import calculate_score_statistics
+
+stats = calculate_score_statistics(response.results)
+print(f"Mean: {stats['mean']:.4f}")
+print(f"Std: {stats['std']:.4f}")
+print(f"Min: {stats['min']:.4f}")
+print(f"Max: {stats['max']:.4f}")
+```
+
+#### retry_on_failure()
+
+Decorator for automatic retry logic.
+
+```python
+from re_client.utils import retry_on_failure
+
+@retry_on_failure(max_retries=3, delay=1.0)
+def my_rerank_function():
+    return client.rerank(query, documents)
+```
 
 ## Examples
 
-See the `examples/` directory for more usage examples:
+The `examples/` directory contains complete usage examples:
 
 - `basic_example.py` - Basic synchronous usage
-- `async_example.py` - Asynchronous usage
-- `batch_example.py` - Batch processing
-- `advanced_example.py` - Advanced features and error handling
+- `async_example.py` - Asynchronous usage and health checks
+
+### Basic Example
+
+```python
+#!/usr/bin/env python3
+from re_client import ReServerClient
+
+def main():
+    client = ReServerClient(host="localhost", port=50051)
+
+    query = "how to install python dependencies fast"
+    documents = [
+        "The sky is blue and the day is beautiful.",
+        "UV is an extremely fast Python package manager written in Rust.",
+        "Carrot cake recipe with chocolate.",
+        "Pip is the standard installer for Python packages.",
+        "The history of the Roman Empire.",
+    ]
+
+    try:
+        response = client.rerank(query, documents)
+
+        print(f"Query: '{query}'")
+        print(f"Reranking {len(documents)} documents...")
+        print()
+
+        for i, result in enumerate(response.results):
+            print(f"{i+1}. {result.text}")
+            print(f"   Score: {result.score:.4f}, Original Index: {result.original_index}")
+            print()
+
+    except Exception as e:
+        print(f"Error: {e}")
+
+if __name__ == "__main__":
+    main()
+```
 
 ## Requirements
 
 - Python 3.8+
 - grpcio >= 1.50.0
 - protobuf >= 4.0.0
+
+## Development
+
+### Building from Source
+
+```bash
+cd sdk
+uv sync --dev
+uv build
+```
+
+### Running Tests
+
+```bash
+cd sdk
+uv run pytest
+```
+
+### Code Quality
+
+```bash
+cd sdk
+uv run black .
+uv run isort .
+uv run mypy .
+```
 
 ## License
 
