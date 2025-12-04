@@ -20,6 +20,7 @@ class OnnxRerankerService(RerankServiceServicer):
     async def Rerank(
         self, request: RerankRequest, context: ServicerContext
     ) -> RerankResponse:
+        print(f"Reranking {len(request.documents)} documents", flush=True)
         query = request.query
         documents = list(request.documents)
 
@@ -49,7 +50,7 @@ class OnnxRerankerService(RerankServiceServicer):
             return RerankResponse(results=results)
 
         except Exception as e:
-            print(f"Error: {e}")
+            print(f"Error: {e}", flush=True)
             context.set_details(str(e))
             context.set_code(StatusCode.INTERNAL)
             return RerankResponse()
