@@ -5,7 +5,7 @@ description = "Python SDK for Mateus-Lacerda Reranker Server"
 readme = "README.md"
 requires-python = ">=3.8"
 authors = [
-    {name = "Pacto", email = "dev@pacto.com"}
+    {name = "Mateus Lacerda", email = "mateuslacerda253@gmail.com"}
 ]
 license = {text = "MIT"}
 keywords = ["colbert", "reranking", "nlp", "grpc", "sdk"]
@@ -37,10 +37,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/pacto/re-server"
-Repository = "https://github.com/pacto/re-server"
-Documentation = "https://github.com/pacto/re-server/tree/main/sdk"
-Issues = "https://github.com/pacto/re-server/issues"
+Homepage = "https://github.com/Matues-Lacerda/reranker-server"
+Repository = "https://github.com/Mateus-Lacerda/reranker-server"
+Documentation = "https://github.com/Mateus-Lacerda/reranker-server/tree/main/sdk"
+Issues = "https://github.com/Mateus-Lacerda/reranker-server/issues"
 
 [build-system]
 requires = ["hatchling"]

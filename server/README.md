@@ -218,14 +218,14 @@ Performance characteristics (approximate, hardware-dependent):
 
 ```bash
 # Build image
-docker build -t re-server .
+docker build -t reranker-server .
 
 # Run container
 docker run -d \
-  --name re-server \
+  --name reranker-server \
   -p 50051:50051 \
   -e POOL_SIZE=4 \
-  re-server
+  reranker-server
 ```
 
 

@@ -1,2 +1,2 @@
 #!/bin/bash
-docker run --name re-server re-server:latest
+docker run --name reranker-server reranker-server:latest
