@@ -5,22 +5,44 @@ set -e
 PROTO_FILE="reranker.proto"
 
 if [ ! -f "$PROTO_FILE" ]; then
-    echo "Error: File '$PROTO_FILE' not found."
+    echo "Error: File '$PROTO_FILE' not found in root directory."
     exit 1
 fi
 
-if command -v uv &> /dev/null; then
-    echo "uv detected. Generating gRPC files via uv..."
-    
-    uv run python -m grpc_tools.protoc -I. --python_out=./server/src --pyi_out=./server/src --grpc_python_out=./server/src "$PROTO_FILE"
-    uv run python -m grpc_tools.protoc -I. --python_out=./sdk/re_client --pyi_out=./sdk/re_client --grpc_python_out=./sdk/re_client "$PROTO_FILE"
+generate_module() {
+    MODULE_DIR=$1
+    OUTPUT_DIR=$2
 
-else
-    echo "uv not found. Attempting to run with system python..."
+    echo "---------------------------------------------------"
+    echo "Processing module: $MODULE_DIR"
     
-    # Try running with standard python (requires grpcio-tools installed via pip)
-    python3 -m grpc_tools.protoc -I. --python_out./server/src --pyi_out./server/src --grpc_python_out./server/src "$PROTO_FILE"
-    python3 -m grpc_tools.protoc -I. --python_out./sdk/re_client --pyi_out./sdk/re_client --grpc_python_out./sdk/re_client "$PROTO_FILE"
-fi
+    pushd "$MODULE_DIR" > /dev/null
 
-echo "Python files generated successfully for $PROTO_FILE!"
+    if command -v uv &> /dev/null; then
+        echo "Using uv from $MODULE_DIR..."
+        
+        uv run python -c 'import grpc, google.protobuf; print(f"Using grpc: {grpc.__version__}, protobuf: {google.protobuf.__version__}")'
+
+        echo "Generating gRPC files..."
+        
+        uv run python -m grpc_tools.protoc \
+            -I.. \
+            --python_out="$OUTPUT_DIR" \
+            --pyi_out="$OUTPUT_DIR" \
+            --grpc_python_out="$OUTPUT_DIR" \
+            "../$PROTO_FILE"
+            
+    else
+        echo "uv not found inside $MODULE_DIR. Skipping or failing..."
+        exit 1
+    fi
+
+    popd > /dev/null
+}
+
+generate_module "server" "src"
+
+generate_module "sdk" "re_client"
+
+echo "---------------------------------------------------"
+echo "Python files generated successfully for both projects!"
