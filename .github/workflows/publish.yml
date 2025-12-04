@@ -86,7 +86,7 @@ jobs:
         with:
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/colbert-server
+            docker.io/${{ secrets.DOCKERHUB_USERNAME }}/reranker-server
           tags: |
             type=ref,event=tag
             type=semver,pattern={{version}}
