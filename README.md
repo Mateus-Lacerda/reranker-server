@@ -286,12 +286,3 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Support
 
 - **Issues**: [GitHub Issues](https://github.com/Mateus-Lacerda/reranker-server/issues)
-
-## Changelog
-
-### v0.1.0
-- Initial release
-- Basic reranking functionality
-- Python SDK
-- Docker support
-- CI/CD pipelines
