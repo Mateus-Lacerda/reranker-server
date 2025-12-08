@@ -1,10 +1,11 @@
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
-from logger import get_logger
 import onnxruntime as ort
-from numpy import array, clip, int64, ndarray
+from numpy import array, clip, int64, linalg, ndarray
 from tokenizers import Tokenizer
+
+from logger import get_logger
 
 _session = None
 _tokenizer = None
