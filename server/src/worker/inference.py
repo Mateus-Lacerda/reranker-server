@@ -79,15 +79,15 @@ def inference(text_list, max_length):
 
     encodings = _tokenizer.encode_batch(text_list)
 
-    it_ids = array([e.ids for e in encodings], dtype=int64)
+    input_ids = array([e.ids for e in encodings], dtype=int64)
     attention_mask = array([e.attention_mask for e in encodings], dtype=int64)
 
-    onnx_its = {"it_ids": it_ids, "attention_mask": attention_mask}
+    onnx_inputs = {"input_ids": input_ids, "attention_mask": attention_mask}
 
     token_type_ids = array([e.type_ids for e in encodings], dtype=int64)
-    onnx_its["token_type_ids"] = token_type_ids
+    onnx_inputs["token_type_ids"] = token_type_ids
 
-    outputs = _session.run(None, onnx_its)
+    outputs = _session.run(None, onnx_inputs)
 
     embeddings = outputs[0]
 
