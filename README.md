@@ -19,14 +19,14 @@ This project provides a complete solution for document reranking using ReServer 
                                          │
                                          ▼
                                 ┌─────────────────┐
-                                │  ReServer Model  │
+                                │  ReServer Model │
                                 │  (ONNX Runtime) │
                                 └─────────────────┘
 ```
 
 ## Features
 
-- **High Performance**: ONNX Runtime-based inference with thread pool execution
+- **Optimized Performance**: ONNX Runtime-based inference with configurable thread pool (1-3 RPS typical)
 - **Scalable**: Configurable worker pool for concurrent request handling in horizontably scalable environments
 - **Easy Integration**: Python SDK with both sync and async support
 - **Production Ready**: Docker containerization with multi-stage builds
@@ -192,17 +192,57 @@ docker run -p 50051:50051 \
 
 ### Benchmarks
 
-- **Throughput**: ~100-500 requests/second (depending on document count and hardware)
-- **Latency**: ~10-50ms per request (single document pair)
-- **Memory**: ~1-2GB RAM (including model)
-- **CPU**: Optimized for multi-core systems
+Based on stress testing with Intel i7-13620H (16 cores), 64GB RAM, POOL_SIZE=2:
+
+#### **Throughput (Requests per Second)**
+- **Light Load**: 1-2 RPS sustained
+- **Production Load**: 0.5-1.5 RPS typical
+- **Stress Test**: 0.7 RPS average under extreme load (500 concurrent users)
+- **Peak Performance**: Up to 3 RPS with optimized configuration
+
+#### **Latency by Document Count**
+- **Single Document**: ~180ms average, ~220ms p95
+- **Standard Reranking (3-10 docs)**: ~690ms average, ~1000ms p95
+- **Large Sets (15-25 docs)**: ~1700ms average, ~2100ms p95
+- **Maximum Load (50+ docs)**: ~3300ms average, ~3900ms p95
+- **Empty Requests**: ~2ms average, ~10ms p95
+
+#### **Resource Requirements**
+- **Memory**: 2-4GB RAM (including model and inference pool)
+- **CPU**: Expect 80-100% utilization under load (ML inference is CPU-intensive)
+- **Storage**: ~500MB for ONNX model files
+- **Network**: Low bandwidth requirements (~1-10KB per request)
+
+#### **Scaling Characteristics**
+- **Document Count Impact**: Latency scales roughly linearly with document count
+- **Concurrent Users**: Performance degrades gracefully under high concurrency
+- **Worker Pool**: Increase POOL_SIZE to match CPU cores for optimal throughput
+- **Horizontal Scaling**: Deploy multiple instances for higher aggregate throughput
 
 ### Optimization Tips
 
+#### **Server Configuration**
 1. **Increase Pool Size**: Set `POOL_SIZE` to match your CPU cores
-2. **Batch Requests**: Use SDK utilities for batch processing
-3. **Connection Pooling**: Reuse client instances
-4. **Resource Limits**: Set appropriate Docker/K8s resource limits
+   - `POOL_SIZE=2`: ~0.7-1.5 RPS (tested)
+   - `POOL_SIZE=4`: ~1.5-3.0 RPS (estimated)
+   - `POOL_SIZE=8+`: ~3.0-6.0 RPS (estimated, diminishing returns)
+
+2. **Hardware Optimization**:
+   - Use high single-core performance CPUs for ML inference
+   - Allocate 4-8GB RAM for stable operation under load
+   - SSD storage recommended for model loading
+
+#### **Application Optimization**
+3. **Batch Requests**: Use SDK utilities for batch processing
+4. **Connection Pooling**: Reuse client instances to reduce overhead
+5. **Request Optimization**: Limit document count per request (optimal: 3-10 documents)
+6. **Caching**: Implement result caching for repeated queries
+
+#### **Production Deployment**
+7. **Load Balancing**: Deploy multiple server instances behind a load balancer
+8. **Resource Limits**: Set appropriate Docker/K8s resource limits
+9. **Monitoring**: Track CPU usage, memory consumption, and response times
+10. **Auto-scaling**: Scale horizontally based on CPU utilization (>80%)
 
 ## Development
 

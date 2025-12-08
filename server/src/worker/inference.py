@@ -1,17 +1,16 @@
 import asyncio
-import logging
 from concurrent.futures import ThreadPoolExecutor
-from typing import Sequence
 
-import numpy as np
+from logger import get_logger
 import onnxruntime as ort
-from numpy import ndarray
+from numpy import array, clip, int64, ndarray
 from tokenizers import Tokenizer
 
 _session = None
 _tokenizer = None
 
-logger = logging.getLogger(__name__)
+
+logger = get_logger()
 
 
 def start_session(model_path: str) -> None:
@@ -69,10 +68,6 @@ def create_pool(
     return RerankerPool(model_path, tokenizer_path, pool_size)
 
 
-def get_attention_mask(input_ids: Sequence, pad_token_id: int = 0) -> list:
-    return [1 if token != pad_token_id else 0 for token in input_ids]
-
-
 def inference(text_list, max_length):
     global _session, _tokenizer
 
@@ -84,20 +79,20 @@ def inference(text_list, max_length):
 
     encodings = _tokenizer.encode_batch(text_list)
 
-    input_ids = np.array([e.ids for e in encodings], dtype=np.int64)
-    attention_mask = np.array([e.attention_mask for e in encodings], dtype=np.int64)
+    it_ids = array([e.ids for e in encodings], dtype=int64)
+    attention_mask = array([e.attention_mask for e in encodings], dtype=int64)
 
-    onnx_inputs = {"input_ids": input_ids, "attention_mask": attention_mask}
+    onnx_its = {"it_ids": it_ids, "attention_mask": attention_mask}
 
-    token_type_ids = np.array([e.type_ids for e in encodings], dtype=np.int64)
-    onnx_inputs["token_type_ids"] = token_type_ids
+    token_type_ids = array([e.type_ids for e in encodings], dtype=int64)
+    onnx_its["token_type_ids"] = token_type_ids
 
-    outputs = _session.run(None, onnx_inputs)
+    outputs = _session.run(None, onnx_its)
 
     embeddings = outputs[0]
 
-    norms = np.linalg.norm(embeddings, axis=2, keepdims=True)  # type: ignore
-    embeddings = embeddings / np.clip(norms, a_min=1e-12, a_max=None)
+    norms = linalg.norm(embeddings, axis=2, keepdims=True)  # type: ignore
+    embeddings = embeddings / clip(norms, a_min=1e-12, a_max=None)
 
     return embeddings, attention_mask
 
@@ -115,5 +110,5 @@ async def rerank(
         )
         return result
     except Exception as e:
-        logger.error(f"Error predicting: {e}")
-        return np.array([]), np.array([])
+        logger.error("Error predicting: %s", e)
+        return array([]), array([])

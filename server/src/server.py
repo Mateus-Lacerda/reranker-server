@@ -1,12 +1,16 @@
 from __future__ import print_function
+
 import os
 
 import numpy as np
 from grpc import ServicerContext, StatusCode, aio
+
+from logger import get_logger, log_time
 from reranker_pb2 import RerankRequest, RerankResponse, RerankResult
 from reranker_pb2_grpc import RerankServiceServicer, add_RerankServiceServicer_to_server
-
 from worker.inference import RerankerPool, create_pool, rerank
+
+logger = get_logger()
 
 
 class OnnxRerankerService(RerankServiceServicer):
@@ -16,12 +20,13 @@ class OnnxRerankerService(RerankServiceServicer):
         self.pool = pool
         self.MAX_LEN_Q = 32
         self.MAX_LEN_D = 180
-        print("Service is ready!")
+        logger.info("Service is ready!")
 
+    @log_time(logger)
     async def Rerank(
         self, request: RerankRequest, context: ServicerContext
     ) -> RerankResponse:
-        print(f"Reranking {len(request.documents)} documents", flush=True)
+        logger.info("Reranking %s documents", len(request.documents))
         query = request.query
         documents = list(request.documents)
 
@@ -51,7 +56,7 @@ class OnnxRerankerService(RerankServiceServicer):
             return RerankResponse(results=results)
 
         except Exception as e:
-            print(f"Error: {e}", flush=True)
+            logger.error("Error: %s", e)
             context.set_details(str(e))
             context.set_code(StatusCode.INTERNAL)
             return RerankResponse()
@@ -65,10 +70,10 @@ async def serve():
 
     server_port = int(os.getenv("SERVER_PORT", "50051"))
     server = aio.server()
-    print(f"Starting server on port {server_port}", flush=True)
-    print(f"Model path: {model_path}", flush=True)
-    print(f"Tokenizer path: {tokenizer_path}", flush=True)
-    print(f"Pool size: {pool_size}", flush=True)
+    logger.info("Starting server on port %s", server_port)
+    logger.info("Model path: %s", model_path)
+    logger.info("Tokenizer path: %s", tokenizer_path)
+    logger.info("Pool size: %s", pool_size)
     add_RerankServiceServicer_to_server(OnnxRerankerService(pool), server)
     server.add_insecure_port(f"[::]:{server_port}")
     await server.start()
