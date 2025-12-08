@@ -59,11 +59,15 @@ def get_logger():
 
 
 def log_time(logger):
+    """
+    Logs the time it took to execute a async function
+    """
+
     def decorator(func):
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        async def wrapper(*args, **kwargs):
             start = time.time()
-            result = func(*args, **kwargs)
+            result = await func(*args, **kwargs)
             end = time.time()
             logger.info(f"Function {func.__name__} took {end - start} seconds")
             return result

@@ -9,9 +9,9 @@ wheels/
 # Virtual environments
 .venv
 
-
 .env
 
 **/model/onnx_full
 **/model/onnx_optimized
 .github/DEPLOYMENT.md
+load_tests
