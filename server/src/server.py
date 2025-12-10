@@ -4,6 +4,9 @@ import os
 
 import numpy as np
 from grpc import ServicerContext, StatusCode, aio
+from grpc_health.v1.health import HealthServicer
+from grpc_health.v1.health_pb2 import HealthCheckResponse
+from grpc_health.v1.health_pb2_grpc import add_HealthServicer_to_server
 
 from logger import get_logger, log_time
 from reranker_pb2 import RerankRequest, RerankResponse, RerankResult
@@ -75,6 +78,9 @@ async def serve():
     logger.info("Tokenizer path: %s", tokenizer_path)
     logger.info("Pool size: %s", pool_size)
     add_RerankServiceServicer_to_server(OnnxRerankerService(pool), server)
+    health_servicer = HealthServicer()
+    health_servicer.set("", HealthCheckResponse.ServingStatus.SERVING)
+    add_HealthServicer_to_server(health_servicer, server)
     server.add_insecure_port(f"[::]:{server_port}")
     await server.start()
     await server.wait_for_termination()
