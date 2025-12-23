@@ -16,9 +16,20 @@ jobs:
       server: ${{ steps.filter.outputs.server }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get latest tag
+        id: last_tag
+        run: |
+          LATEST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || git rev-list --max-parents=0 HEAD)
+          echo "last_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          echo "Comparando mudanças contra a tag: $LATEST_TAG"
+
       - uses: dorny/paths-filter@v3
         id: filter
         with:
+          base: ${{ steps.last_tag.outputs.last_tag }}
           filters: |
             sdk:
               - 'sdk/**'
