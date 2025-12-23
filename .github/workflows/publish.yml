@@ -9,7 +9,25 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      sdk: ${{ steps.filter.outputs.sdk }}
+      server: ${{ steps.filter.outputs.server }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            sdk:
+              - 'sdk/**'
+            server:
+              - 'server/**'
+
   test-sdk:
+    needs: changes
+    if: needs.changes.outputs.sdk == 'true'
     name: Test SDK
     runs-on: ubuntu-latest
     strategy:
@@ -31,6 +49,8 @@ jobs:
           uv run pytest --verbose || echo "No tests found"
 
   test-server:
+    needs: changes
+    if: needs.changes.outputs.server == 'true'
     name: Test Server Build
     runs-on: ubuntu-latest
     steps:
@@ -49,7 +69,8 @@ jobs:
 
   publish-sdk:
     name: Build & Publish SDK
-    needs: test-sdk
+    needs: [changes, test-sdk]
+    if: needs.changes.outputs.sdk == 'true'
     runs-on: ubuntu-latest
     environment: release
     permissions:
@@ -75,7 +96,8 @@ jobs:
 
   publish-docker:
     name: Build & Push Docker
-    needs: test-server
+    needs: [changes, test-server]
+    if: needs.changes.outputs.server == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -118,6 +140,11 @@ jobs:
     name: Update Release Notes
     needs: [publish-sdk, publish-docker]
     runs-on: ubuntu-latest
+    if: |
+      always() && 
+      (needs.publish-sdk.result == 'success' || needs.publish-sdk.result == 'skipped') &&
+      (needs.publish-docker.result == 'success' || needs.publish-docker.result == 'skipped') &&
+      (needs.publish-sdk.result == 'success' || needs.publish-docker.result == 'success')
     permissions:
       contents: write
     steps:

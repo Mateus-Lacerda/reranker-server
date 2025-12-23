@@ -1,8 +1,11 @@
 import asyncio
+import os
 from concurrent.futures import ThreadPoolExecutor
 
 import onnxruntime as ort
-from numpy import array, clip, int64, linalg, ndarray
+from numpy import array, clip, int64, linalg, matmul, ndarray, transpose
+from numpy import max as np_max
+from numpy import sum as np_sum
 from tokenizers import Tokenizer
 
 from logger import get_logger
@@ -16,6 +19,16 @@ logger = get_logger()
 
 def start_session(model_path: str) -> None:
     global _session
+    sess_options = ort.SessionOptions()
+    ort_single_threaded = os.environ.get("ORT_SINGLE_THREADED", "false") == "true"
+    if ort_single_threaded:
+        logger.info("Using single-threaded ONNXRuntime")
+        sess_options.intra_op_num_threads = 1
+        sess_options.inter_op_num_threads = 1
+        sess_options.graph_optimization_level = (
+            ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+        )
+
     _session = ort.InferenceSession(
         model_path,
         sess_options=ort.SessionOptions(),
@@ -98,18 +111,46 @@ def inference(text_list, max_length):
     return embeddings, attention_mask
 
 
+def compute_scores(
+    Q_emb: ndarray,
+    D_emb: ndarray,
+    q_mask: ndarray,
+) -> ndarray:
+    """Compute scores for each document."""
+    D_emb_T = transpose(D_emb, (0, 2, 1))
+    scores_matrix = matmul(Q_emb, D_emb_T)
+    max_scores = np_max(scores_matrix, axis=2)
+    q_valid_tokens = q_mask[0] == 1
+    final_scores = np_sum(max_scores[:, q_valid_tokens], axis=1)
+    return final_scores
+
+
+def inference_and_score(query, documents, max_len_q, max_len_d):
+    Q_emb, q_mask = inference([query], max_len_q)
+    D_emb, _ = inference(documents, max_len_d)
+    scores = compute_scores(Q_emb, D_emb, q_mask)
+    return scores
+
+
 async def rerank(
-    text_list: list[str],
-    max_length: int,
+    query: str,
+    documents: list[str],
+    max_len_q: int,
+    max_len_d: int,
     inference_pool: RerankerPool,
-) -> tuple[ndarray, ndarray]:
+) -> ndarray:
     """Run prediction using thread pool."""
     try:
         loop = asyncio.get_event_loop()
         result = await loop.run_in_executor(
-            inference_pool.executor, inference, text_list, max_length
+            inference_pool.executor,
+            inference_and_score,
+            query,
+            documents,
+            max_len_q,
+            max_len_d,
         )
         return result
     except Exception as e:
         logger.error("Error predicting: %s", e)
-        return array([]), array([])
+        return array([])

@@ -2,7 +2,6 @@ from __future__ import print_function
 
 import os
 
-import numpy as np
 from grpc import ServicerContext, StatusCode, aio
 from grpc_health.v1.health import HealthServicer
 from grpc_health.v1.health_pb2 import HealthCheckResponse
@@ -37,13 +36,9 @@ class OnnxRerankerService(RerankServiceServicer):
             return RerankResponse(results=[])
 
         try:
-            Q_emb, q_mask = await rerank([query], self.MAX_LEN_Q, self.pool)
-            D_emb, d_mask = await rerank(documents, self.MAX_LEN_D, self.pool)
-            D_emb_T = np.transpose(D_emb, (0, 2, 1))
-            scores_matrix = np.matmul(Q_emb, D_emb_T)
-            max_scores = np.max(scores_matrix, axis=2)
-            q_valid_tokens = q_mask[0] == 1
-            final_scores = np.sum(max_scores[:, q_valid_tokens], axis=1)
+            final_scores = await rerank(
+                query, documents, self.MAX_LEN_Q, self.MAX_LEN_D, self.pool
+            )
             results = []
             for i, score in enumerate(final_scores):
                 results.append(
